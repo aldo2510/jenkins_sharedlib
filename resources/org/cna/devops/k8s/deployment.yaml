@@ -1,0 +1,21 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${appName ?: 'demo-app'}
+spec:
+  replicas: ${replicas ?: 1}
+  selector:
+    matchLabels:
+      app: ${appName ?: 'demo-app'}
+  template:
+    metadata:
+      labels:
+        app: ${appName ?: 'demo-app'}
+    spec:
+      containers:
+        - name: ${appName ?: 'demo-app'}
+          image: ${image}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: ${containerPort ?: 8080}
