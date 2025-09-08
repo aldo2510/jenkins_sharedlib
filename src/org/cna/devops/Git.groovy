@@ -1,4 +1,4 @@
-package org.acme.devops
+package org.cna.devops
 
 class Git implements Serializable {
   static String branch(script) {
