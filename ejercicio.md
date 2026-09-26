@@ -117,7 +117,7 @@ El ejemplo incluido en `examples/Jenkinsfile` queda así:
 standardJavaPipeline(
   repository: 'https://github.com/aldo2510/ec-maven-users-api.git',
   branch: 'main',
-  image: 'maven:3.9.3-eclipse-temurin-17',
+  dockerImage: 'maven:3.9.3-eclipse-temurin-17',
   goals: 'clean package'
 )
 ```
@@ -175,7 +175,7 @@ Modifica `standardJavaPipeline.groovy` para aceptar parámetros adicionales, por
 standardJavaPipeline(
   repository: '...',
   branch: 'main',
-  image: 'maven:3.9.3-eclipse-temurin-17',
+  dockerImage: 'maven:3.9.3-eclipse-temurin-17',
   goals: 'clean verify'
 )
 ```
