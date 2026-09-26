@@ -64,7 +64,7 @@ archiveMavenArtifacts artifacts: 'target/*.jar'
 standardJavaPipeline(
   repository: 'https://github.com/aldo2510/ec-maven-users-api.git',
   branch: 'main',
-  image: 'maven:3.9.3-eclipse-temurin-17',
+  dockerImage: 'maven:3.9.3-eclipse-temurin-17',
   goals: 'clean package'
 )
 ```
