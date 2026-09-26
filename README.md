@@ -1,66 +1,72 @@
+# Jenkins Shared Library — CI/CD y DevSecOps
 
-# cna-shared-lib (Jenkins Shared Library, nivel medio)
+Shared Library de Jenkins para centralizar prácticas reutilizables de CI/CD y reducir lógica duplicada en Jenkinsfiles.
 
-Librería compartida de Jenkins orientada a **CI/CD** con utilidades para:
-- Git y versionado semántico
-- Build & push de imágenes Docker
-- Deploy a Kubernetes (manifest/Helm)
-- Calidad (cobertura, lints), artefactos, utilidades de notificación
-- Wrappers de entorno (Node, Python, Docker host), checkout estándar, manejo de credenciales
+Repositorio: https://github.com/aldo2510/jenkins_sharedlib
 
-> Pensada para usarse como **Global Pipeline Library**: `@Library('cna-lib@main') _`
+## Componentes principales
+
+### Java / Maven
+- `buildMaven()`: ejecuta Maven con defaults consistentes (`-B -ntp`).
+- `getPomVersion()`: obtiene la versión desde `pom.xml` sin depender de Maven.
+- `archiveMavenArtifacts()`: estandariza el archivado de JARs.
+- `standardJavaPipeline()`: workflow completo Checkout → Version → Package → Archive.
+
+### Contenedores
+- `dockerBuildImage()`: wrapper para construir imágenes Docker.
+- `dockerBuild()` y `dockerPush()`: utilidades existentes para Docker.
+
+### Plataforma / DevSecOps
+La librería existente también incluye utilidades para Git, Kubernetes, calidad, notificaciones y wrappers de entorno. La idea es mantener en la library la implementación común y en los Jenkinsfiles solamente la configuración específica de cada aplicación.
 
 ## Estructura
-```
-vars/                    # Entradas públicas (steps / global vars)
-src/org/cna/devops/     # Clases de negocio (no Steps)
-resources/...            # Plantillas (libraryResource)
-docs/                    # Guías y ejemplos
-test/                    # Pruebas con Jenkins Pipeline Unit (Gradle)
+
+```text
+vars/                    # Steps públicos
+src/org/aldo/jenkins/    # Clases Groovy reutilizables
+resources/               # Recursos usados mediante libraryResource()
+test/                    # Pruebas de Pipeline Unit
+examples/                # Jenkinsfiles de ejemplo
+docs/                    # Documentación
 ```
 
-## Requisitos
-- En Jenkins: plugins `workflow-cps-global-lib`, `git`, `pipeline-utility-steps`, `credentials-binding`, etc.
-- Agregar esta librería como **Global Pipeline Library** (JCasC o UI).
+## Configuración como Global Pipeline Library
+
+En Jenkins: **Manage Jenkins → System → Global Pipeline Libraries**.
+
+- **Name:** `aldo-jenkins-shared`
+- **Default version:** `main`
+- **Retrieval method:** Modern SCM
+- **SCM:** Git
+- **Repository:** `https://github.com/aldo2510/jenkins_sharedlib.git`
+
+Para producción se recomienda consumir versiones etiquetadas, por ejemplo:
+
+```groovy
+@Library('aldo-jenkins-shared@v1.0.0') _
+```
 
 ## Uso básico
-```groovy
-@Library('cna-lib@main') _
 
-pipeline {
-  agent any
-  stages {
-    stage('Build') {
-      steps {
-        dockerBuild image: 'cna/app', tag: gitInfo.shortSha()
-      }
-    }
-    stage('Test & Quality') {
-      steps {
-        quality.junit('reports/junit/*.xml')
-        quality.cobertura('reports/cobertura.xml')
-      }
-    }
-    stage('Push') {
-      steps {
-        withDockerHost {
-          dockerPush image: 'cna/app', tag: gitInfo.shortSha(), registry: 'ghcr.io/tu-org'
-        }
-      }
-    }
-    stage('Deploy') {
-      steps {
-        k8sDeploy.manifest(
-          template: 'org/cna/devops/k8s/deployment.yaml',
-          values: [ image: "ghcr.io/tu-org/cna/app:${gitInfo.shortSha()}", ns: 'demo' ]
-        )
-      }
-    }
-  }
-  post {
-    success { notify.slack("✅ OK ${env.JOB_NAME} #${env.BUILD_NUMBER}") }
-    failure { notify.slack("❌ FAIL ${env.JOB_NAME} #${env.BUILD_NUMBER}") }
-  }
-}
+```groovy
+@Library('aldo-jenkins-shared') _
+
+def version = getPomVersion()
+buildMaven goals: 'clean package'
+archiveMavenArtifacts artifacts: 'target/*.jar'
 ```
-# jenkins_sharedlib
+
+## Pipeline de ejemplo
+
+```groovy
+@Library('aldo-jenkins-shared') _
+
+standardJavaPipeline(
+  repository: 'https://github.com/aldo2510/ec-maven-users-api.git',
+  branch: 'main',
+  image: 'maven:3.9.3-eclipse-temurin-17',
+  goals: 'clean package'
+)
+```
+
+Consulta `ejercicio.md` para el laboratorio paso a paso y los retos de extensión.
