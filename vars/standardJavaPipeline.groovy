@@ -2,14 +2,14 @@
 def call(Map args = [:]) {
   def repository = args.repository ?: error('standardJavaPipeline: repository es requerido')
   def branch = args.branch ?: 'main'
-  def image = args.image ?: 'maven:3.9.3-eclipse-temurin-17'
+  def dockerImage = args.dockerImage ?: 'maven:3.9.3-eclipse-temurin-17'
   def goals = args.goals ?: 'clean package'
 
   pipeline {
     agent none
     stages {
       stage('Build') {
-        agent { docker { image image } }
+        agent { docker { image dockerImage } }
         stages {
           stage('Checkout') {
             steps { git branch: branch, url: repository }
